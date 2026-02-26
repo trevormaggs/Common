@@ -91,10 +91,8 @@ public final class FlagRegistry implements Iterable<FlagRule>
             throw new IllegalArgumentException("Flag [" + name + "] is already defined in this registry.");
         }
 
-        flagMap.put(name, rule);        
+        flagMap.put(name, rule);
         requiredFlags.add(rule);
-        
-        System.out.printf("flag: %-20s%s\n", rule.getFlagName(), rule.getFlagType());
     }
 
     /**
@@ -145,5 +143,18 @@ public final class FlagRegistry implements Iterable<FlagRule>
         {
             rule.resetFlag();
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder(64);
+
+        for (FlagRule rule : flagMap.values())
+        {
+            sb.append(String.format("flag: %-20s%s\n", rule.getFlagName(), rule.getFlagType()));
+        }
+
+        return sb.toString();
     }
 }

@@ -1,0 +1,35 @@
+flag: --debug             ARG_BLANK
+flag: --help              ARG_BLANK
+flag: --platform          SEP_OPTIONAL
+flag: -d                  ARG_BLANK
+flag: -f                  ARG_OPTIONAL
+flag: -h                  ARG_BLANK
+flag: -o                  ARG_OPTIONAL
+flag: -p                  SEP_OPTIONAL
+flag: -q                  ARG_BLANK
+flag: -s                  ARG_BLANK
+flag: -u                  ARG_OPTIONAL
+
+Token: -g
+Token: vulfeed.dat
+Token: -acp31
+Token: 33
+Token: --gem99
+Token: --csv
+Token: -data
+Token: val99
+Token: --depth82
+Token: -b=727
+Token: -n
+Token: /var/trigger.xlsx
+Token: -b=747
+Token: -vofile.xlsx
+Token: -h
+Token: -x
+Token: nina
+Token: -k707
+Token: --range=12,24,36,48,60,72,84,96
+Token: -query=80286
+Token: --range=108
+Token: outcomes
+Token: D:/KDR Project/Milestones/TestBatch

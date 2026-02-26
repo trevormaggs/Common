@@ -3,22 +3,22 @@ package common.clireader;
 import java.text.ParseException;
 import common.clireader.FlagRule.FlagType;
 
-public class TestNewCLI
+public class CommandParserNew
 {
     private final boolean debug;
     private final String[] rawArgs;
     private final FlagRegistry registry;
 
     /**
-     * Constructs a new instance of the FlagType class, using the command line arguments
-     * provided and offering the option to enable debugging.
+     * Constructs a new instance designed to read the command line arguments directly provided by
+     * the user and offering the option to enable debugging.
      *
      * @param args
      *        the command line arguments
-     * @param dbg
+     * @param debug
      *        a boolean flag specifying whether debugging should be enabled
      */
-    public TestNewCLI(String[] args, boolean debug)
+    public CommandParserNew(String[] args, boolean debug)
     {
         if (args == null || args.length == 0)
         {
@@ -30,7 +30,7 @@ public class TestNewCLI
         this.registry = new FlagRegistry();
     }
 
-    public TestNewCLI(String[] args)
+    public CommandParserNew(String[] args)
     {
         this(args, false);
     }
@@ -46,10 +46,15 @@ public class TestNewCLI
      */
     public void execute()
     {
+        if (debug)
+        {
+            System.out.printf("%s\n", registry);
+        }
+
         try
         {
             // 1. Clean the input
-            CommandTokenizer tokenizer = new CommandTokenizer(rawArgs);
+            CommandTokenizer tokenizer = new CommandTokenizer(rawArgs, debug);
 
             // 2. The Strategy-based Engine would be invoked here
             // FlagEngine engine = new FlagEngine(registry, tokenizer);
@@ -83,7 +88,7 @@ public class TestNewCLI
 
         String[] dummy2 = {"--platform", "=", "rhel,win10,win2016,WIN2012R2,WIN2019,WIN2022,sles,ubn", "-o", "scopeos.txt", "MDAV Details Export.csv"};
 
-        TestNewCLI cli = new TestNewCLI(dummy2, true);
+        CommandParserNew cli = new CommandParserNew(dummy, true);
 
         try
         {
