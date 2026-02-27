@@ -1,67 +1,50 @@
 package common.clireader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import common.StringJoiner;
 
 /**
  *
  */
 public class CommandTokenizer
 {
-    /**
-     * Constructs a new instance of the FlagType class, using the command line arguments
-     * provided and offering the option to enable debugging.
-     *
-     * @param rawArgs
-     *        the command line arguments
-     * @param debug
-     *        a boolean flag specifying whether debugging should be enabled
-     */
-    public CommandTokenizer(String[] rawArgs, boolean debug)
-    {
-        List<String> list = sanitise(rawArgs);
-
-        if (debug)
-        {
-            for (String token : list)
-            {
-                System.out.printf("Token: %s\n", token);
-            }
-        }
-    }
+    private final List<String> tokens;
 
     /**
-     * Constructs a new instance of the CommandTokenizer class using the command line arguments
-     * provided.
+     * Constructs a new instance designed to sanitise and normalise the specified command line
+     * arguments.
      *
      * @param args
      *        the command line arguments
      */
     public CommandTokenizer(String[] args)
     {
-        this(args, false);
+        tokens = (args != null && args.length > 0 ? normalise(args) : Collections.emptyList());
     }
 
     /**
-     * Replaces the old 'sanitise' method logic to merge tokens ending/starting
-     * with '=' or ',' into single logical units.
+     * Performs sanitisation of the specified array of arguments and returns a list of cleaned
+     * tokens to provide normalisation. It also takes care of merging tokens ending/starting with
+     * '=' or ',' into single logical units.
+     *
+     * @param args
+     *        the command line arguments
+     * @return a list of normalised tokens
      */
-    private List<String> sanitise(String[] args)
+    private List<String> normalise(String[] args)
     {
         StringBuilder sb = new StringBuilder();
         List<String> result = new ArrayList<>();
 
-        if (args == null || args.length == 0)
-        {
-            return result;
-        }
-
         for (int i = 0; i < args.length; i++)
         {
-            boolean glueNext = false;
+            boolean joinNext = false;
             String current = args[i];
 
-            // We skip empty strings only if they exist in the raw array (rare for OS args)
+            // Although unlikely, it defensively protects
+            // integrity in case empty strings do happen
             if (current.isEmpty())
             {
                 continue;
@@ -73,26 +56,18 @@ public class CommandTokenizer
             {
                 String next = args[i + 1];
 
-                // Logic: Glue if we are mid-assignment (=) or mid-list (,)
-                // BUT: Don't glue if the next token is clearly a new flag starting with -
-                if (current.endsWith("=") || next.startsWith("="))
+                // Make sure the next token is not a negative number
+                if (!next.matches("^\\-{1,2}[a-zA-Z].*"))
                 {
-                    glueNext = true;
-                }
-
-                else if (current.endsWith(",") || next.startsWith(","))
-                {
-                    // Peek ahead: Is the next token a new flag?
-                    if (!next.matches("^\\-{1,2}[a-zA-Z].*"))
+                    if (current.endsWith("=") || next.startsWith("=") || current.endsWith(",") || next.startsWith(","))
                     {
-                        glueNext = true;
+                        joinNext = true;
                     }
                 }
             }
 
-            if (!glueNext)
+            if (!joinNext)
             {
-                // Clean up multiple commas/trailing commas before storing
                 String token = cleanCommas(sb.toString());
 
                 if (!token.isEmpty())
@@ -118,10 +93,30 @@ public class CommandTokenizer
     }
 
     /**
-     * Uses regex to collapse multiple commas into one and removes leading/trailing commas from the
+     * Provides the normalised tokens for further processing.
+     *
+     * @return the list of normalised tokens
+     */
+    public List<String> getTokens()
+    {
+        return tokens;
+    }
+
+    /**
+     * Flattens the command line arguments into a single string.
+     *
+     * @return the flattened string with individual tokens separated by a single whitespace
+     */
+    public String flattenArguments()
+    {
+        return StringJoiner.join(" ", tokens.toArray());
+    }
+
+    /**
+     * Using regex to collapse multiple commas into one and removes leading/trailing commas from the
      * merged argument.
      */
-    private String cleanCommas(String input)
+    private static String cleanCommas(String input)
     {
         if (input == null)
         {
@@ -135,7 +130,7 @@ public class CommandTokenizer
         cleaned = cleaned.replaceAll("=,", "=");
 
         // 3. Strip leading/trailing commas
-        cleaned = cleaned.replaceAll("^,", "").replaceAll(",$", "");
+        cleaned = cleaned.replaceAll("^,|,$", "");
 
         return cleaned;
     }
@@ -165,5 +160,25 @@ public class CommandTokenizer
         {
             return token;
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        if (tokens.isEmpty())
+        {
+            return "No tokens";
+        }
+
+        StringBuilder sb = new StringBuilder(256);
+
+        for (String token : tokens)
+        {
+            sb.append("Token: ");
+            sb.append(token);
+            sb.append(System.lineSeparator());
+        }
+
+        return sb.toString();
     }
 }

@@ -8,7 +8,7 @@ import java.util.TreeMap;
 
 /**
  * This class serves as a registry for all defined flag rules.
- * 
+ *
  * It manages the collection of {@link FlagRule} instances, providing methods to register new rules
  * and retrieve them during the parsing process. It ensures that flag names remain unique within the
  * application context.
@@ -24,7 +24,7 @@ public final class FlagRegistry implements Iterable<FlagRule>
 
     /**
      * Core registry class used to initialise a new flag registry for compliance purposes.
-     * 
+     *
      * Note, it is based on a TreeMap type to ensure that flags are sorted alphabetically for easier
      * debugging.
      */
@@ -61,7 +61,7 @@ public final class FlagRegistry implements Iterable<FlagRule>
 
             for (int k = 0; k < requiredFlags.size(); k++)
             {
-                if (k > 1)
+                if (k > 0)
                 {
                     sb.append(",");
                 }
@@ -73,26 +73,45 @@ public final class FlagRegistry implements Iterable<FlagRule>
         }
     }
 
+    // NEED TO TEST BOTH validateRequiredOptions AND validateRequiredOptions2
+    public void validateRequiredOptions2() throws ParseException
+    {
+        List<String> missing = new ArrayList<>();
+
+        for (FlagRule rule : flagMap.values())
+        {
+            if (rule.isRequired() && !rule.isFlagHandled())
+            {
+                missing.add(rule.getFlagName());
+            }
+        }
+
+        if (!missing.isEmpty())
+        {
+            throw new ParseException("Missing required option(s): " + missing.toString(), 0);
+        }
+    }
+
     /**
      * Registers a new flag rule in the registry.
      *
      * @param rule
      *        the {@link FlagRule} to add
-     * 
+     *
      * @throws IllegalArgumentException
      *         if a flag with the same name is already registered
      */
     public void addRule(FlagRule rule)
     {
-        String name = rule.getFlagName();
-
-        if (flagMap.containsKey(name))
+        if (flagMap.containsKey(rule.getFlagName()))
         {
-            throw new IllegalArgumentException("Flag [" + name + "] is already defined in this registry.");
+            throw new IllegalArgumentException("Flag [" + rule.getFlagName() + "] already defined.");
         }
 
-        flagMap.put(name, rule);
-        requiredFlags.add(rule);
+        flagMap.put(rule.getFlagName(), rule);
+
+        // TEST IT
+        // requiredFlags.add(rule);
     }
 
     /**
@@ -131,7 +150,7 @@ public final class FlagRegistry implements Iterable<FlagRule>
 
     /**
      * Resets all registered flags to their initial state.
-     * 
+     *
      * <p>
      * This is useful when the same registry is used for multiple parsing operations, ensuring that
      * the 'handled' status of each flag is cleared.
@@ -152,9 +171,48 @@ public final class FlagRegistry implements Iterable<FlagRule>
 
         for (FlagRule rule : flagMap.values())
         {
-            sb.append(String.format("flag: %-20s%s\n", rule.getFlagName(), rule.getFlagType()));
+            sb.append(String.format("Flag: %-20s%s\n", rule.getFlagName(), rule.getFlagType()));
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Assigns a value to the registered flag.
+     *
+     * @param name
+     *        the name of the flag to be associated with
+     * @param value
+     *        the value to assign
+     * @throws ParseException
+     */
+    public void assignValue(String name, String value) throws ParseException
+    {
+        FlagRule rule = flagMap.get(name);
+
+        if (rule == null)
+        {
+            throw new ParseException("Unknown flag [" + name + "].", 0);
+        }
+
+        if (value != null && !rule.expectsArgument())
+        {
+            throw new ParseException("Flag [" + name + "] does not accept values.", 0);
+        }
+
+        rule.addValue(value);
+        rule.setFlagHandled();
+    }
+
+    public void markAsHandled(String name) throws ParseException
+    {
+        FlagRule rule = flagMap.get(name);
+
+        if (rule == null)
+        {
+            throw new ParseException("Unknown flag [" + name + "].", 0);
+        }
+
+        rule.setFlagHandled();
     }
 }

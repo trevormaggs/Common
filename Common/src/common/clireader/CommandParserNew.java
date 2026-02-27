@@ -46,15 +46,18 @@ public class CommandParserNew
      */
     public void execute()
     {
-        if (debug)
-        {
-            System.out.printf("%s\n", registry);
-        }
-
         try
         {
             // 1. Clean the input
-            CommandTokenizer tokenizer = new CommandTokenizer(rawArgs, debug);
+            CommandTokenizer tokenizer = new CommandTokenizer(rawArgs);
+
+            if (debug)
+            {
+                System.out.printf("%s\n", registry);
+                System.out.printf("%s\n", tokenizer);
+            }
+
+            System.out.printf("Token List: %s\n", tokenizer.flattenArguments());
 
             // 2. The Strategy-based Engine would be invoked here
             // FlagEngine engine = new FlagEngine(registry, tokenizer);
@@ -75,18 +78,9 @@ public class CommandParserNew
         }
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args)
+    public static void testOne()
     {
-        String[] dummy = {
-                "-g", "vulfeed.dat", "-acp31", "33", "--gem99", "--csv", "-data", "val99", "--depth82",
-                "-b=727", "-n", "/var/trigger.xlsx", "-b", "=", "747", "-vofile.xlsx", "-h", "-x",
-                "nina", "-k707", "--range=12,24,36,48,60,72", ",84", ",", ",,,", "96,", ",", ",",
-                "-query", "=", "80286", "--range=", ",,,108", "outcomes", "D:/KDR Project/Milestones/TestBatch"};
-
-        String[] dummy2 = {"--platform", "=", "rhel,win10,win2016,WIN2012R2,WIN2019,WIN2022,sles,ubn", "-o", "scopeos.txt", "MDAV Details Export.csv"};
+        String[] dummy = {"--platform", "=", "rhel,win10,win2016,WIN2012R2,WIN2019,WIN2022,sles,ubn", "-o", "scopeos.txt", "MDAV Details Export.csv"};
 
         CommandParserNew cli = new CommandParserNew(dummy, true);
 
@@ -114,5 +108,53 @@ public class CommandParserNew
             System.err.printf("%s\n", exc.getMessage());
             // exc.printStackTrace();
         }
+    }
+
+    public static void testTwo()
+    {
+        String[] dummy = {
+                "-g", "vulfeed.dat", "-acp31", "33", "--gem99", "--csv", "-data", "val99", "--depth82",
+                "-b=727", "-n", "/var/trigger.xlsx", "-b", "=", "747", "-vofile.xlsx", "-h", "-x",
+                "nina", "-k707", "--range=12,24,36,48,60,72", ",84", ",", ",,,", "96,", ",", ",",
+                "--query", "=", "80286", "--range=", ",,,108", "outcomes", "D:/KDR Project/Milestones/TestBatch"};
+
+        CommandParserNew cli = new CommandParserNew(dummy, true);
+
+        try
+        {
+            cli.addDefinition("-a", FlagType.ARG_BLANK);
+            cli.addDefinition("-c", FlagType.ARG_REQUIRED);
+            cli.addDefinition("--gem", FlagType.ARG_REQUIRED);
+            cli.addDefinition("-x", FlagType.ARG_REQUIRED);
+            cli.addDefinition("-g", FlagType.ARG_REQUIRED);
+            cli.addDefinition("-n", FlagType.ARG_REQUIRED);
+            cli.addDefinition("-o", FlagType.ARG_REQUIRED);
+            cli.addDefinition("-v", FlagType.ARG_BLANK);
+            cli.addDefinition("-h", FlagType.ARG_BLANK);
+            cli.addDefinition("--help", FlagType.ARG_BLANK);
+            cli.addDefinition("--csv", FlagType.ARG_BLANK);
+            cli.addDefinition("-k", FlagType.ARG_OPTIONAL);
+            cli.addDefinition("--depth", FlagType.ARG_REQUIRED);
+            cli.addDefinition("-b", FlagType.SEP_OPTIONAL);
+            cli.addDefinition("--query", FlagType.SEP_REQUIRED);
+            cli.addDefinition("--range", FlagType.SEP_REQUIRED);
+
+            cli.execute();
+        }
+
+        catch (ParseException exc)
+        {
+            System.err.printf("%s\n", exc.getMessage());
+            // exc.printStackTrace();
+        }
+    }
+
+    /**
+     * @param args
+     */
+    public static void main(String[] args)
+    {
+        //testOne();
+        testTwo();
     }
 }

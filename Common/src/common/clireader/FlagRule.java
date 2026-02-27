@@ -2,6 +2,7 @@ package common.clireader;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import common.cli.CommandLineReader;
 
@@ -73,14 +74,14 @@ public class FlagRule
 
         if (!longFlag && flag.length() > 2)
         {
-            throw new ParseException("Short flag rules must be a single character, for example: '-v'. Found [" + flag + "]", 0);
+            throw new ParseException("Short flag rules must be a single character, for example: '-v'. Found [" + flag + "].", 0);
         }
     }
 
     /**
      * Retrieves the name of this flag.
      *
-     * @return the name of this flag
+     * @return the flag name
      */
     public String getFlagName()
     {
@@ -90,7 +91,7 @@ public class FlagRule
     /**
      * Retrieves the type of this flag.
      *
-     * @return the {@link FlagType} of this flag
+     * @return the {@link FlagType}, which defines this flag
      */
     public FlagType getFlagType()
     {
@@ -98,14 +99,17 @@ public class FlagRule
     }
 
     /**
-     * Associates a value with this command flag.
+     * Associates a non-null value with this command flag.
      *
-     * @param val
+     * @param value
      *        the string value parsed from the command line to be associated with this rule
      */
-    public void addValue(String val)
+    public void addValue(String value)
     {
-        values.add(val);
+        if (value != null)
+        {
+            values.add(value);
+        }
     }
 
     /**
@@ -119,7 +123,7 @@ public class FlagRule
     }
 
     /**
-     * Returns true if the flag is a short flag type (e.g., -v).
+     * Returns true if the flag is a short flag type, for example: -v.
      *
      * @return true if it is a short flag
      */
@@ -129,7 +133,7 @@ public class FlagRule
     }
 
     /**
-     * Returns true if the flag is a long flag type (e.g., --verbose).
+     * Returns true if the flag is a long flag type, for example: --verbose.
      *
      * @return true if it is a long flag
      */
@@ -170,11 +174,12 @@ public class FlagRule
     {
         handled = false;
         separator = false;
+        // values.clear(); <-- TEST FIRST
     }
 
     /**
      * Sets a status indicating that this flag has been handled, including processing any
-     * associated arguments.
+     * associated arguments or values.
      */
     public void setFlagHandled()
     {
@@ -182,7 +187,7 @@ public class FlagRule
     }
 
     /**
-     * Returns whether this flag has been handled during the current parse.
+     * Returns whether this flag has been handled during the current parsing phase.
      *
      * @return true if the processing of this flag is complete, false otherwise
      */
@@ -192,8 +197,8 @@ public class FlagRule
     }
 
     /**
-     * Returns whether this is a mandatory flag that must be provided
-     * with an argument or separator.
+     * Returns whether this is a mandatory flag that must be accompanied by an argument or
+     * separator.
      *
      * @return true if the flag is required, false otherwise
      */
@@ -213,8 +218,8 @@ public class FlagRule
     }
 
     /**
-     * Sets this flag to expect an accompanying value subsequent to encountering
-     * a value separator (=).
+     * Sets this flag to expect an accompanying value subsequent to encountering a value separator
+     * (=).
      */
     public void setSeparator()
     {
@@ -224,7 +229,7 @@ public class FlagRule
     /**
      * Queries whether a value separator is currently assigned to this flag.
      *
-     * @return true if a value separator is assigned, false otherwise
+     * @return true if a value separator has been handled, false otherwise
      */
     public boolean hasSeparator()
     {
@@ -238,7 +243,7 @@ public class FlagRule
      */
     public boolean hasValueAssigned()
     {
-        return (values.size() > 0);
+        return (!values.isEmpty());
     }
 
     /**
@@ -256,9 +261,10 @@ public class FlagRule
      *
      * @param index
      *        the index of the value to retrieve
-     *
-     * @return the value at the specified position, or an empty string if the index
-     *         is out of bounds
+     * @return the value at the specified position
+     * 
+     * @throws IndexOutOfBoundsException
+     *         if the index is out of bounds
      */
     public String getValue(int index)
     {
@@ -267,7 +273,18 @@ public class FlagRule
             return values.get(index);
         }
 
-        return "";
+        throw new IndexOutOfBoundsException("Index [" + index + "] is out of bounds");
+    }
+
+    /**
+     * Retrieves all values currently associated with this flag rule.
+     * 
+     * @return an unmodifiable {@link List} containing all assigned string values, or an empty list
+     *         if no values have been associated with this flag
+     */
+    public List<String> getAllValues()
+    {
+        return (values.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(values));
     }
 
     /**
