@@ -3,7 +3,6 @@ package common.clireader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import common.StringJoiner;
 
 /**
  *
@@ -109,7 +108,7 @@ public class CommandTokenizer
      */
     public String flattenArguments()
     {
-        return StringJoiner.join(" ", tokens.toArray());
+        return "[" + String.join(" ", tokens) + "]";
     }
 
     /**
@@ -132,34 +131,10 @@ public class CommandTokenizer
         // 3. Strip leading/trailing commas
         cleaned = cleaned.replaceAll("^,|,$", "");
 
+        // Removes any commas or spaces immediately following an equals sign
+        cleaned = cleaned.replaceAll("=[\\s,]+", "=");
+
         return cleaned;
-    }
-    /**
-     * Removes the leading dashes from the specified token.
-     *
-     * @param token
-     *        the entry extracted from the command line
-     *
-     * @return the string with the dashes removed
-     */
-    private static String stripLeadingDashes(final String token)
-    {
-        // double dash
-        if (token.startsWith("--"))
-        {
-            return token.substring(2);
-        }
-
-        // single dash
-        else if (token.startsWith("-"))
-        {
-            return token.substring(1);
-        }
-
-        else
-        {
-            return token;
-        }
     }
 
     @Override

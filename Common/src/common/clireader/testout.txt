@@ -1,15 +1,22 @@
-flag: --debug             ARG_BLANK
-flag: --help              ARG_BLANK
-flag: --platform          SEP_OPTIONAL
-flag: -d                  ARG_BLANK
-flag: -f                  ARG_OPTIONAL
-flag: -h                  ARG_BLANK
-flag: -o                  ARG_OPTIONAL
-flag: -p                  SEP_OPTIONAL
-flag: -q                  ARG_BLANK
-flag: -s                  ARG_BLANK
-flag: -u                  ARG_OPTIONAL
+--- Registry Definitions ---
+Flag: a               Type: Short           Status: PENDING         Rule: ARG_BLANK       Value: 
+Flag: b               Type: Short           Status: PENDING         Rule: SEP_OPTIONAL    Value: 
+Flag: c               Type: Short           Status: PENDING         Rule: ARG_REQUIRED    Value: 
+Flag: csv             Type: Long            Status: PARSED          Rule: ARG_BLANK       Value: 
+Flag: depth           Type: Long            Status: PARSED          Rule: ARG_REQUIRED    Value: 82
+Flag: g               Type: Short           Status: PENDING         Rule: ARG_REQUIRED    Value: 
+Flag: gem             Type: Long            Status: PARSED          Rule: ARG_REQUIRED    Value: 99
+Flag: h               Type: Short           Status: PENDING         Rule: ARG_BLANK       Value: 
+Flag: help            Type: Long            Status: PENDING         Rule: ARG_BLANK       Value: 
+Flag: k               Type: Short           Status: PENDING         Rule: ARG_OPTIONAL    Value: 
+Flag: n               Type: Short           Status: PENDING         Rule: ARG_REQUIRED    Value: 
+Flag: o               Type: Short           Status: PENDING         Rule: ARG_REQUIRED    Value: 
+Flag: query           Type: Long            Status: PARSED          Rule: SEP_REQUIRED    Value: 80286
+Flag: range           Type: Long            Status: PARSED          Rule: SEP_REQUIRED    Value: 12, 24, 36, 48, 60, 72, 84, 96, 108
+Flag: v               Type: Short           Status: PENDING         Rule: ARG_BLANK       Value: 
+Flag: x               Type: Short           Status: PENDING         Rule: ARG_REQUIRED    Value: 
 
+--- Tokenization ---
 Token: -g
 Token: vulfeed.dat
 Token: -acp31
@@ -29,7 +36,12 @@ Token: -x
 Token: nina
 Token: -k707
 Token: --range=12,24,36,48,60,72,84,96
-Token: -query=80286
+Token: --query=80286
 Token: --range=108
 Token: outcomes
 Token: D:/KDR Project/Milestones/TestBatch
+
+Flattened: [-g vulfeed.dat -acp31 33 --gem99 --csv -data val99 --depth82 -b=727 -n /var/trigger.xlsx -b=747 -vofile.xlsx -h -x nina -k707 --range=12,24,36,48,60,72,84,96 --query=80286 --range=108 outcomes D:/KDR Project/Milestones/TestBatch]
+
+Execution completed. Operands captured: 7
+Free-standing arguments [7] is too many (limit is 1). Found [vulfeed.dat, 33, val99, /var/trigger.xlsx, nina, outcomes, D:/KDR Project/Milestones/TestBatch]

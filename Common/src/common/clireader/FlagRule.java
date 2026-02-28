@@ -31,23 +31,6 @@ public class FlagRule
     private boolean separator;
 
     /**
-     * Defines the expected behaviour for flag arguments and separators.
-     */
-    public enum FlagType
-    {
-        /** Mandatory value required (e.g., -f value) */
-        ARG_REQUIRED,
-        /** Optional value permitted (e.g., -f [value]) */
-        ARG_OPTIONAL,
-        /** Mandatory value via separator (e.g., --file=data.txt) */
-        SEP_REQUIRED,
-        /** Optional value via separator (e.g., --file[=data.txt]) */
-        SEP_OPTIONAL,
-        /** Boolean flag with no associated value (e.g., --verbose) */
-        ARG_BLANK
-    }
-
-    /**
      * Internal constructor to create a new flag instance and register the flag name and type.
      *
      * @param flag
@@ -67,7 +50,7 @@ public class FlagRule
             throw new ParseException("Flag [" + flag + "] is invalid.", 0);
         }
 
-        this.flagName = flag;
+        this.flagName = FlagRegistry.stripLeadingDashes(flag);
         this.flagType = type;
         this.longFlag = flag.startsWith("--");
         this.values = new ArrayList<>();
@@ -296,6 +279,7 @@ public class FlagRule
     @Override
     public String toString()
     {
-        return String.format("Flag [%s] | Type: %s | Status: %s | Values: %s", flagName, flagType, (handled ? "PARSED" : "PENDING"), values.isEmpty() ? "none" : String.join(", ", values));
+        return String.format("Flag: %-16sType: %-16sStatus: %-16sRule: %-16sValue: %s\n",
+                flagName, (longFlag ? "Long" : "Short"), (handled ? "PARSED" : "PENDING"), flagType, String.join(", ", values));
     }
 }

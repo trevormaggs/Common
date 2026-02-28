@@ -11,32 +11,24 @@ import java.util.NoSuchElementException;
  * Provides an enhanced Iterator interface that allows users to peek at the next element in the
  * iteration without advancing the iterator.
  * </p>
- * 
+ *
  * <p>
- * This implementation was inspired by another source. For more information, please visit
+ * This implementation was inspired by another source. For more information, visit
  * <a href="https://medium.com/@harycane/peeking-iterator-ef69ce9ef788">this site</a>.
  * </p>
- * 
- * <p>
- * <b>Supported Platforms:</b>
- * </p>
- * 
- * <ul>
- * <li>Windows</li>
- * <li>*NIX operating systems</li>
- * </ul>
- * 
+ *
  * <p>
  * <b>Change logs:</b>
  * </p>
- * 
+ *
  * <ul>
  * <li>Created by Trevor Maggs on October 12, 2021</li>
+ * <li>Updated by Trevor Maggs on February 27, 2026</li>
  * </ul>
- * 
+ *
  * @author Trevor Maggs
- * @version 0.1
- * @since October 12, 2021
+ * @version 0.2
+ * @since 17 Fenruary 2026
  */
 public class PeekingIterator<T> implements Iterator<T>
 {
@@ -46,7 +38,7 @@ public class PeekingIterator<T> implements Iterator<T>
 
     /**
      * Constructs a new peeking iterator, caching the first element in advance.
-     * 
+     *
      * @param itr
      *        the Iterator object
      */
@@ -60,18 +52,18 @@ public class PeekingIterator<T> implements Iterator<T>
      * Constructs a new peeking iterator from the specified Collection object, caching the first
      * element in advance.
      *
-     * @param coll
+     * @param obj
      *        the specified Collection object
      */
-    public PeekingIterator(Collection<T> coll)
+    public PeekingIterator(Collection<T> obj)
     {
-        this(coll.iterator());
+        this(obj.iterator());
     }
 
     /**
      * Constructs a new peeking iterator from the specified Map's collection of values, caching the
      * first element in advance.
-     * 
+     *
      * @param <K>
      *        Key component of the specified map instance
      * @param map
@@ -85,7 +77,7 @@ public class PeekingIterator<T> implements Iterator<T>
     /**
      * Constructs a new peeking iterator from the specified generic array, caching the first element
      * in advance.
-     * 
+     *
      * @param arr
      *        the generic array
      */
@@ -111,30 +103,45 @@ public class PeekingIterator<T> implements Iterator<T>
             noSuchElement = true;
         }
     }
-
     /**
-     * Returns the next element without advancing the iterator.
-     * 
+     * Retrieves the next element in the iteration without advancing the pointer.
+     *
+     * <p>
+     * This allows for lookahead logic, which is essential for determining if a command-line token
+     * is a flag or a value before consuming it.
+     * </p>
+     *
      * @return the cached next element
-     * 
+     *
      * @throws NoSuchElementException
-     *         if there are no more elements in the iteration
+     *         if the iteration has no more elements
      */
     public T peek()
     {
+        if (noSuchElement)
+        {
+            throw new NoSuchElementException("Cannot peek further");
+        }
+
         return cursor;
     }
 
     /**
-     * Returns the cached item from the last element in the iteration and advances the iterator.
-     * 
-     * @return the cached item from the last element in the iteration
+     * Returns the current element and advances the iterator to the next position.
+     *
+     * @return the element that was at the top of the iteration
+     *
      * @throws NoSuchElementException
      *         if the iteration contains no more elements
      */
     @Override
     public T next()
     {
+        if (noSuchElement)
+        {
+            throw new NoSuchElementException();
+        }
+
         T result = cursor;
         advanceIterator();
 
@@ -150,5 +157,17 @@ public class PeekingIterator<T> implements Iterator<T>
     public boolean hasNext()
     {
         return !noSuchElement;
+    }
+
+    /**
+     * This operation is not supported by this implementation.
+     *
+     * @throws UnsupportedOperationException
+     *         always, as removing elements from the command-line stream is prohibited
+     */
+    @Override
+    public void remove()
+    {
+        throw new UnsupportedOperationException("Removal is not supported by PeekingIterator");
     }
 }

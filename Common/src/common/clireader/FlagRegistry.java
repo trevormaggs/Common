@@ -20,7 +20,6 @@ import java.util.TreeMap;
 public final class FlagRegistry implements Iterable<FlagRule>
 {
     private final Map<String, FlagRule> flagMap;
-    private final List<FlagRule> requiredFlags = new ArrayList<>();
 
     /**
      * Core registry class used to initialise a new flag registry for compliance purposes.
@@ -39,10 +38,30 @@ public final class FlagRegistry implements Iterable<FlagRule>
         addRule(rule);
     }
 
-    @Override
-    public java.util.Iterator<FlagRule> iterator()
+    /**
+     * Removes the leading dashes from the specified token.
+     *
+     * @param token
+     *        the entry extracted from the command line
+     *
+     * @return the string with the dashes removed
+     */
+    public static String stripLeadingDashes(String token)
     {
-        return flagMap.values().iterator();
+        if (token.startsWith("--"))
+        {
+            return token.substring(2);
+        }
+
+        else if (token.startsWith("-"))
+        {
+            return token.substring(1);
+        }
+
+        else
+        {
+            return token;
+        }
     }
 
     /**
@@ -54,27 +73,6 @@ public final class FlagRegistry implements Iterable<FlagRule>
      *         comma-separated string representation of any missing flag names in the console
      */
     public void validateRequiredOptions() throws ParseException
-    {
-        if (!requiredFlags.isEmpty())
-        {
-            StringBuilder sb = new StringBuilder();
-
-            for (int k = 0; k < requiredFlags.size(); k++)
-            {
-                if (k > 0)
-                {
-                    sb.append(",");
-                }
-
-                sb.append(requiredFlags.get(k).getFlagName());
-            }
-
-            throw new ParseException("Missing required option" + (requiredFlags.size() > 1 ? "s" : "") + ": [" + sb.toString() + "]", 0);
-        }
-    }
-
-    // NEED TO TEST BOTH validateRequiredOptions AND validateRequiredOptions2
-    public void validateRequiredOptions2() throws ParseException
     {
         List<String> missing = new ArrayList<>();
 
@@ -109,9 +107,6 @@ public final class FlagRegistry implements Iterable<FlagRule>
         }
 
         flagMap.put(rule.getFlagName(), rule);
-
-        // TEST IT
-        // requiredFlags.add(rule);
     }
 
     /**
@@ -164,19 +159,6 @@ public final class FlagRegistry implements Iterable<FlagRule>
         }
     }
 
-    @Override
-    public String toString()
-    {
-        StringBuilder sb = new StringBuilder(64);
-
-        for (FlagRule rule : flagMap.values())
-        {
-            sb.append(String.format("Flag: %-20s%s\n", rule.getFlagName(), rule.getFlagType()));
-        }
-
-        return sb.toString();
-    }
-
     /**
      * Assigns a value to the registered flag.
      *
@@ -197,14 +179,14 @@ public final class FlagRegistry implements Iterable<FlagRule>
 
         if (value != null && !rule.expectsArgument())
         {
-            throw new ParseException("Flag [" + name + "] does not accept values.", 0);
+            throw new ParseException("Flag [" + name + "] does not accept values", 0);
         }
 
         rule.addValue(value);
         rule.setFlagHandled();
     }
 
-    public void markAsHandled(String name) throws ParseException
+    public void acknowledgeFlag(String name) throws ParseException
     {
         FlagRule rule = flagMap.get(name);
 
@@ -214,5 +196,24 @@ public final class FlagRegistry implements Iterable<FlagRule>
         }
 
         rule.setFlagHandled();
+    }
+
+    @Override
+    public java.util.Iterator<FlagRule> iterator()
+    {
+        return flagMap.values().iterator();
+    }
+
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder(64);
+
+        for (FlagRule rule : flagMap.values())
+        {
+            sb.append(rule);
+        }
+
+        return sb.toString();
     }
 }
