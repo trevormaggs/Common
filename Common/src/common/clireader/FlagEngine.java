@@ -6,8 +6,23 @@ import java.util.List;
 import common.PeekingIterator;
 
 /**
- * The core orchestrator for command-line parsing. This class manages the life-cycle of a parse:
- * definition, tokenization, and execution.
+ * The core orchestrator for command-line parsing.
+ * 
+ * <p>
+ * This class manages the life-cycle of a command-line parse through three distinct phases:
+ * </p>
+ * 
+ * <ol>
+ * <li><b>Definition:</b> Registering {@link FlagRule objects via {@link #addDefinition}.</li>
+ * <li><b>Tokenization:</b> Breaking the raw input into manageable components.</li>
+ * <li><b>Execution:</b> Processing tokens using poly-morphic {@link FlagHandler} handlers.</li>
+ * </ol>
+ * 
+ * <p>
+ * The engine follows POSIX conventions for short flags (e.g., {@code -vh}) and GNU conventions for
+ * long flags (e.g., {@code --verbose}). It supports clustered short flags, attached values, and
+ * explicit value separators ({@code =}).
+ * </p>
  *
  * @author Trevor Maggs
  * @version 2.0
@@ -22,6 +37,28 @@ public class FlagEngine
     private final List<String> operands;
     private boolean debug;
     private int maxOperands = 1;
+
+    private final FlagListener observer = new FlagListener()
+    {
+        /**
+         * Using the Observer pattern to decouple token parsing from state management. This allows
+         * handlers to report multiple discoveries, for example: clustered flags, during a single
+         * invocation without managing internal collection state.
+         */
+        @Override
+        public void onDiscovery(String name, String value) throws ParseException
+        {
+            if (value == null)
+            {
+                registry.acknowledgeFlag(name);
+            }
+
+            else
+            {
+                processRangeValues(registry.getRule(name), value);
+            }
+        }
+    };
 
     public FlagEngine(String[] args)
     {
@@ -43,12 +80,20 @@ public class FlagEngine
     }
 
     /**
-     * Registers a new flag rule.
+     * Registers a new flag rule with the engine.
+     * 
+     * <p>
+     * Definitions must be added before calling {@link #execute()}. If a flag with the same name is
+     * already registered, the new definition will overwrite the old one.
+     * </p>
      * 
      * @param flag
-     *        the new flag to add
+     *        the flag identifier, including dashes (e.g., "-v" or "--portal")
      * @param type
-     *        the flag rule type, defining how arguments and separators are handled
+     *        the {@link FlagType} defining how arguments and separators are handled
+     * 
+     * @throws ParseException
+     *         if the flag format is invalid according to {@link FlagRule} constraints
      */
     public void addDefinition(String flag, FlagType type) throws ParseException
     {
@@ -86,7 +131,21 @@ public class FlagEngine
     }
 
     /**
-     * Executes the parsing logic.
+     * Executes the parsing logic against the raw arguments provided at construction.
+     * 
+     * <p>
+     * This method performs a single-pass parse. It identifies flags, delegates to specialised
+     * handlers, collects operands, and finally validates:
+     * </p>
+     * 
+     * <ul>
+     * <li>The free-standing argument limit ({@link #setFreeArgumentLimit}).</li>
+     * <li>The presence of all mandatory flags ({@link FlagType#ARG_REQUIRED}, etc).</li>
+     * </ul>
+     * 
+     * @throws ParseException
+     *         if an unrecognised flag is encountered, a required argument is missing, or validation
+     *         limits are exceeded
      */
     public void execute() throws ParseException
     {
@@ -97,93 +156,20 @@ public class FlagEngine
         {
             String token = it.peek();
 
-            if (token.startsWith("--"))
+            if (isLongOption(token))
             {
-                String[] result = longHandler.handle(it, registry);
-
-                if (result[0] == null)
-                {
-                    throw new ParseException("Unrecognised long flag [--" + token + "] detected", 0);
-                }
-
-                if (result[1] == null)
-                {
-                    registry.acknowledgeFlag(result[0]);
-                }
-
-                else
-                {
-                    processRangeValues(registry.getRule(result[0]), result[1]);
-                }
+                longHandler.handle(it, registry, observer);
             }
 
-            else if (token.startsWith("-") && token.length() > 1)
+            else if (isShortOption(token))
             {
-                shortHandler.handle(it, registry);
-                it.next();
+                shortHandler.handle(it, registry, observer);
             }
 
             else
             {
+                // It's an operand, representing a list of free-standing arguments
                 operands.add(it.next());
-            }
-        }
-
-        if (debug)
-        {
-            System.out.println("--- Registry Definitions ---");
-            System.out.println(registry);
-            System.out.println("--- Tokenization ---");
-            System.out.println(tokenizer);
-            System.out.printf("Flattened: %s\n\n", tokenizer.flattenArguments());
-
-            System.out.println("Execution completed. Operands captured: " + operands.size());
-        }
-
-        validateFreeArgumentLimit();
-        registry.validateRequiredOptions();
-    }
-
-    public void execute2() throws ParseException
-    {
-        CommandTokenizer tokenizer = new CommandTokenizer(rawArgs);
-        PeekingIterator<String> it = new PeekingIterator<>(tokenizer.getTokens());
-
-        while (it.hasNext())
-        {
-            String token = it.peek();
-            String[] result = null;
-
-            if (token.startsWith("--"))
-            {
-                result = longHandler.handle(it, registry);
-            }
-
-            else if (token.startsWith("-") && token.length() > 1)
-            {
-                result = shortHandler.handle(it, registry);
-                it.next();
-            }
-
-            else
-            {
-                operands.add(it.next());
-                continue;
-            }
-
-            if (result == null || result[0] == null)
-            {
-                throw new ParseException("Unrecognised flag [" + token + "] detected", 0);
-            }
-
-            else if (result[1] == null)
-            {
-                registry.acknowledgeFlag(result[0]);
-            }
-
-            else
-            {
-                processRangeValues(registry.getRule(result[0]), result[1]);
             }
         }
 
@@ -203,11 +189,17 @@ public class FlagEngine
     }
 
     /**
-     * Processes a comma-separated string and adds each individual value to the list of values for
-     * the current flag.
+     * Collapses a comma-separated string into manageable individual values.
      * 
+     * <p>
+     * Each element is trimmed of leading and trailing whitespace. Empty elements (e.g.,
+     * "val1,,val2") are ignored. Validated values are processed in {@link #processSingleValue()}.
+     * </p>
+     * 
+     * @param rule
+     *        the rule currently being processed
      * @param value
-     *        the string with multiple values attached to it
+     *        the raw string containing potential multiple values
      */
     private void processRangeValues(FlagRule rule, String value)
     {
@@ -259,6 +251,51 @@ public class FlagEngine
 
             throw new ParseException(msg, 0);
         }
+    }
+
+    /**
+     * Verifies the specified token indicates a long flag starting with double leading dashes
+     * (--), based on the GNU convention. This flag can optionally have a value appended to it, such
+     * as --LV or --L=V.
+     *
+     * @param token
+     *        the command line token
+     *
+     * @return {@code true} if the token is a valid long flag or option
+     */
+    private static boolean isLongOption(String token)
+    {
+        return token.matches("\\--[A-Za-z].*$") && token.length() > 2;
+    }
+
+    /**
+     * Verifies the specified token indicates a valid short option, based on the POSIX convention.
+     *
+     * A short option is a single character preceded by a single leading dash (-S). It can be
+     * clustered or combined with other short options and may be followed by a value, such as -SV,
+     * -S=V, -S1S2V, -S1S2=V, or -S1S2=V1,V2,V3.
+     *
+     * @param token
+     *        the raw command line token
+     *
+     * @return {@code true} if the token is a valid short flag or option
+     */
+    private static boolean isShortOption(String token)
+    {
+        return (token.matches("^\\-[^\\-].*$") && token.length() > 1);
+    }
+
+    /**
+     * Verifies the specified token represents a valid command flag or option.
+     *
+     * @param token
+     *        the entry extracted from the command line
+     *
+     * @return {@code true} if the token is identified with a valid flag or option
+     */
+    private static boolean isOption(String token)
+    {
+        return (isLongOption(token) || isShortOption(token));
     }
 
     // TEST ONLY

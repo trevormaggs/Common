@@ -6,8 +6,8 @@ import common.PeekingIterator;
 public class ShortFlagHandler implements FlagHandler
 {
     @Override
-    public String[] handle(PeekingIterator<String> tokens, FlagRegistry registry) throws ParseException
+    public void handle(PeekingIterator<String> tokens, FlagRegistry registry, FlagListener observer) throws ParseException
     {
-        return null;
+        tokens.next();
     }
 }

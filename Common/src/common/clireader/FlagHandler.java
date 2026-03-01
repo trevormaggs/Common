@@ -15,10 +15,12 @@ public interface FlagHandler
      *        the stream of normalised tokens
      * @param registry
      *        the registry to look up rules
+     * @param observer
+     *        an event-driven object to communicate any state updates back to the caller
      * @return String array where [0] is name and [1] is value (can be null)
      *
      * @throws ParseException
      *         if the flag or its arguments violate the rules
      */
-    String[] handle(PeekingIterator<String> tokens, FlagRegistry registry) throws ParseException;
+    void handle(PeekingIterator<String> tokens, FlagRegistry registry, FlagListener observer) throws ParseException;
 }

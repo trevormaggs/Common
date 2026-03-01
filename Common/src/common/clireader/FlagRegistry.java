@@ -86,7 +86,7 @@ public final class FlagRegistry implements Iterable<FlagRule>
 
         if (!missing.isEmpty())
         {
-            throw new ParseException("Missing required option(s): " + missing.toString(), 0);
+            throw new ParseException("Missing required option(s) [" + String.join(", ", missing) + "]", 0);
         }
     }
 

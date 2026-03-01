@@ -17,6 +17,7 @@ Flag: v               Type: Short           Status: PENDING         Rule: ARG_BL
 Flag: x               Type: Short           Status: PENDING         Rule: ARG_REQUIRED    Value: 
 
 --- Tokenization ---
+Free-standing arguments [7] is too many (limit is 1). Found [vulfeed.dat, 33, val99, /var/trigger.xlsx, nina, outcomes, D:/KDR Project/Milestones/TestBatch]
 Token: -g
 Token: vulfeed.dat
 Token: -acp31
@@ -44,4 +45,3 @@ Token: D:/KDR Project/Milestones/TestBatch
 Flattened: [-g vulfeed.dat -acp31 33 --gem99 --csv -data val99 --depth82 -b=727 -n /var/trigger.xlsx -b=747 -vofile.xlsx -h -x nina -k707 --range=12,24,36,48,60,72,84,96 --query=80286 --range=108 outcomes D:/KDR Project/Milestones/TestBatch]
 
 Execution completed. Operands captured: 7
-Free-standing arguments [7] is too many (limit is 1). Found [vulfeed.dat, 33, val99, /var/trigger.xlsx, nina, outcomes, D:/KDR Project/Milestones/TestBatch]
